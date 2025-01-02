@@ -17,6 +17,7 @@
             height: 100vh;
             background: linear-gradient(135deg, #6f86d6, #48c6ef);
             color: white;
+            text-align: center;
         }
         #scanner {
             width: 300px;
@@ -34,7 +35,6 @@
         #status {
             font-size: 24px;
             margin-top: 20px;
-            text-align: center;
         }
         .result {
             font-size: 100px;
@@ -47,7 +47,7 @@
             color: #F44336;
         }
         button {
-            padding: 10px 20px;
+            padding: 15px 30px;
             font-size: 18px;
             border: none;
             border-radius: 5px;
@@ -55,17 +55,26 @@
             background-color: #333;
             color: white;
             margin-top: 20px;
+            display: inline-block;
         }
         button:hover {
             background-color: #555;
         }
-        #enableCameraBtn {
+        #startScanBtn {
             background-color: #4CAF50;
             font-size: 20px;
             padding: 15px 30px;
         }
-        #enableCameraBtn:hover {
+        #startScanBtn:hover {
             background-color: #45a049;
+        }
+        #enableCameraBtn {
+            background-color: #f39c12;
+            font-size: 16px;
+            padding: 10px 20px;
+        }
+        #enableCameraBtn:hover {
+            background-color: #e67e22;
         }
     </style>
 </head>
@@ -74,8 +83,8 @@
     <video id="liveview" autoplay muted></video>
     <div id="status">Scan a QR code</div>
     <div class="result" id="result"></div>
-    <button id="enableCameraBtn" onclick="enableCamera()">Enable Camera</button>
-    <button onclick="restartScanner()">Restart Scanner</button>
+    <button id="enableCameraBtn" onclick="enableCamera()">Activate Camera</button>
+    <button id="startScanBtn" onclick="startScanner()">Start Scanning</button>
 
     <script>
         const expectedHash = "5d711ecc274a7d5ccbe39c55d40484819b0f2e7351ba0f0e49eee9cb2e663ed4646de872ef3b0b8349f66dd0228b8a36bd2f2e16ac100a1848b35ed7ea2514aa"; // The expected hash value
@@ -84,53 +93,51 @@
         const statusElement = document.getElementById("status");
 
         let qrScanner;
+        let cameraEnabled = false;
 
-        // Function to enable the camera manually
+        // Function to enable the camera
         function enableCamera() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
                     .then(function (stream) {
                         liveviewElement.srcObject = stream;  // Display the live camera feed
-
-                        // Create the QR scanner instance
-                        qrScanner = new QrScanner(liveviewElement, (result) => {
-                            console.log("QR Code detected: ", result);
-                            if (result === expectedHash) {
-                                resultElement.textContent = "✔";
-                                resultElement.className = "result green";
-                                statusElement.textContent = "Hash matched!";
-                            } else {
-                                resultElement.textContent = "✘";
-                                resultElement.className = "result red";
-                                statusElement.textContent = "Hash does not match!";
-                            }
-                        });
-
-                        // Start scanning
-                        qrScanner.start();
-                        statusElement.textContent = "Scanning QR code...";
+                        cameraEnabled = true;
+                        statusElement.textContent = "Camera is ready. Click 'Start Scanning'.";
                     })
                     .catch(function (err) {
                         console.error("Error accessing camera: ", err);
-                        alert("Camera access is required to scan QR codes.");
+                        alert("Camera access is required.");
                     });
             } else {
                 alert("Camera access not supported in this browser.");
             }
         }
 
-        // Restart the scanner
-        function restartScanner() {
-            resultElement.textContent = "";
-            statusElement.textContent = "Scan a QR code";
-            if (qrScanner) {
-                qrScanner.stop();  // Stop the scanner
+        // Function to start the QR scanner
+        function startScanner() {
+            if (!cameraEnabled) {
+                alert("Please enable the camera first.");
+                return;
             }
-            enableCamera(); // Restart the camera and scanner
-        }
 
-        // Automatically prompt for camera access when the page loads
-        // enableCamera();
+            // Create the QR scanner instance
+            qrScanner = new QrScanner(liveviewElement, (result) => {
+                console.log("QR Code detected: ", result);
+                if (result === expectedHash) {
+                    resultElement.textContent = "✔";
+                    resultElement.className = "result green";
+                    statusElement.textContent = "Hash matched!";
+                } else {
+                    resultElement.textContent = "✘";
+                    resultElement.className = "result red";
+                    statusElement.textContent = "Hash does not match!";
+                }
+            });
+
+            // Start scanning
+            qrScanner.start();
+            statusElement.textContent = "Scanning QR code...";
+        }
     </script>
 </body>
 </html>
